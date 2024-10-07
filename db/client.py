@@ -1,7 +1,7 @@
-# Execute: mongod --dbpath "/Users/alvarikoke/Documents/mongodb/data/"
-# Connection: mongodb://localhost
+import redis, os
 
-from pymongo import MongoClient
-
-db_client = MongoClient().local
-#db_client = MongoClient("mongodb+srv://<username>:<password>@<cluster-address>/<database>?retryWrites=true&w=majority").test
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"), 
+    port=os.getenv("REDIS_HOST", 6379), 
+    decode_responses=True
+    )
