@@ -20,7 +20,7 @@ async def weather(location: str):
 
     # Call weather API
     weatherData = makeWeatherApiRequest(location)
-    if weatherData["error_code"]:
+    if "error_code" in weatherData:
         raise HTTPException(status_code=weatherData["error_code"], detail=weatherData["text"])
 
     # Update cache

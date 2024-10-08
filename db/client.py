@@ -8,3 +8,4 @@ try:
         )
 except:
     print("ERROR connecting to Redis DB")
+print(os.getenv("REDIS_HOST", "localhost"))
