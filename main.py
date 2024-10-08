@@ -1,20 +1,18 @@
-import os, uvicorn
+import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from routers import weather
 
 load_dotenv()
-#WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 
 app = FastAPI()
 
 # Routers
 app.include_router(weather.router)
 
-
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"owner": "Aperture Science"}
 
 # init server -> uvicorn main:app --reload
 # Url local: http://127.0.0.1:8000

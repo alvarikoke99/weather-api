@@ -1,31 +1,39 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from db.client import redis_client
 import os
+from api.weather_api import makeWeatherApiRequest
+
+EXPIRATION_TIME = int(os.getenv("CACHE_EXPIRATION_TIME", 3600)) # 1h in ms
 
 router = APIRouter(prefix="/weather",
                    tags=["weather"], 
                    responses={404: {"message": "NOT FOUND"}})
 
-cache = {}
-
-EXPIRATION_TIME = os.getenv("CACHE_EXPIRATION_TIME", 3600), # 1h in ms
-
-@router.get("/test/")
-async def weather(location: str):
-    return {"location": location, "weather": "Sunny and wonderful"}
-
 @router.get("")
 async def weather(location: str):
-    weatherData = redis_client.get(location)
+    weatherData = redis_client.hgetall(location)
 
     if weatherData:
-        return {"location": location, "weather": weatherData}
+        return weatherData
     
     print("CACHE NOT FOUND: Weather data for " + location + " not found in Redis cache")
 
-    # call weather API
-    weatherData = "Sunny and wonderful"
+    # Call weather API
+    weatherData = makeWeatherApiRequest(location)
+    if weatherData["error_code"]:
+        raise HTTPException(status_code=weatherData["error_code"], detail=weatherData["text"])
 
-    redis_client.set(location, weatherData, ex=3600)
+    # Update cache
+    try:
+        pipe = redis_client.pipeline()
+        pipe.hset(location, mapping=weatherData)
+        pipe.expire(location, EXPIRATION_TIME)
+        result = pipe.execute()
+        '''if not result[0]:
+            print("ERROR setting weather data in cache")
+        if not result[1]:
+            print("ERROR setting weather data expiration in cache")'''
+    except:
+        print("ERROR updating Redis cache")
 
-    return {"location": location, "weather": weatherData}
+    return weatherData
